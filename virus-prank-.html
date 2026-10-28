@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Halloween System Warning</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", Tahoma, Arial, sans-serif; }
+  body { background: #000; height: 100vh; overflow: hidden; }
+
+  #desktop-msg {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    color: #ff7900; text-align: center; opacity: 0.95; pointer-events: none;
+    width: 90%;
+  }
+  #desktop-msg h1 { font-size: 30px; font-weight: 600; margin-bottom: 10px; }
+  #desktop-msg p { font-size: 16px; color: #fff; }
+
+  .popup {
+    position: absolute; width: 340px; background: #080808;
+    border: 1px solid #ff7900;
+    box-shadow: 0 0 12px rgba(255, 121, 0, .22);
+    user-select: none; z-index: 10;
+  }
+
+  .titlebar {
+    background: #111; color: #ff7900; padding: 7px 10px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; font-weight: 600; cursor: move;
+    border-bottom: 1px solid #ff7900;
+  }
+
+  .titlebar .x {
+    background: transparent; border: none; color: #ff7900;
+    width: 22px; height: 18px; line-height: 15px;
+    text-align: center; cursor: pointer; font-size: 16px;
+  }
+
+  .body { padding: 14px; display: flex; gap: 12px; }
+  .icon { font-size: 36px; line-height: 1; }
+  .text { font-size: 13px; color: #fff; }
+  .text b { color: #ff7900; }
+  .text .small { font-size: 11px; color: #aaa; margin-top: 6px; }
+
+  .footer { padding: 0 14px 14px; text-align: center; }
+
+  .stop-btn {
+    background: #ff7900; color: #000; border: none;
+    padding: 9px 12px; font-size: 12px; font-weight: 700;
+    cursor: pointer; border-radius: 2px; width: 100%;
+  }
+  .stop-btn:hover { background: #fff; }
+
+  /* Fake haunted scan */
+  #scan-box {
+    position: fixed; bottom: 75px; left: 50%;
+    transform: translateX(-50%);
+    width: 300px; background: #080808; color: #fff;
+    border: 1px solid #ff7900; padding: 12px;
+    z-index: 9000; font-size: 12px;
+  }
+  #scan-title { color: #ff7900; margin-bottom: 9px; }
+  #scan-track {
+    width: 100%; height: 8px; background: #222;
+    border: 1px solid #663300; margin-bottom: 8px;
+  }
+  #scan-fill {
+    width: 0%; height: 100%; background: #ff7900;
+    transition: width .5s ease;
+  }
+  #scan-message { color: #ccc; }
+
+  #hud {
+    position: fixed; bottom: 14px; left: 50%;
+    transform: translateX(-50%);
+    background: #080808; color: #fff; padding: 10px 16px;
+    border: 1px solid #ff7900;
+    font-size: 12px; z-index: 9999;
+    display: flex; gap: 14px; align-items: center;
+    white-space: nowrap;
+  }
+  #hud b { color: #ff7900; }
+
+  #hud button {
+    background: #ff7900; color: #000; border: none;
+    padding: 6px 10px; font-size: 11px; font-weight: 700;
+    cursor: pointer;
+  }
+  #hud button:hover { background: #fff; }
+
+  @media (max-width: 600px) {
+    .popup { width: 290px; }
+    #hud { gap: 7px; padding: 8px; font-size: 10px; }
+    #scan-box { width: 260px; }
+    #desktop-msg h1 { font-size: 23px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="desktop-msg">
+  <h1>Welcome to the Haunted Computer.</h1>
+  <p>The ghosts have accepted your cookies.</p>
+</div>
+
+<div id="scan-box">
+  <div id="scan-title">HALLOWEEN SCAN IN PROGRESS...</div>
+  <div id="scan-track"><div id="scan-fill"></div></div>
+  <div id="scan-message">Checking for suspicious ghosts...</div>
+</div>
+
+<div id="hud">
+  <span>Ghosts: <b id="count">0</b></span>
+  <span>Spook level: <b id="level">0%</b></span>
+  <span>Scan: <b id="scan">0%</b></span>
+  <button id="mercy">END THE JOKE</button>
+</div>
+
+<script>
+  const warnings = [
+    { t: "⚠ SYSTEM WARNING", h: "YOUR COMPUTER IS INFECTED!", b: "A dangerous virus has been detected on this device.", d: "Threat: Trojan.Win32.TotallyReal" },
+    { t: "🎃 PUMPKIN ALERT", h: "YOUR PC HAS BEEN PUMPKINED!", b: "oh no, there's a squash here.", d: "Threat: Pumpkin.exe (100% organic)" },
+    { t: "⚠ VIRUS DETECTED", h: "MALWARE FOUND!", b: "Your files are being encrypted RIGHT NOW.", d: "Threat: Ransomware.ProbablyFine" },   
+    { t: "VAMPIRE WARNING", h: "YOUR BATTERY IS BEING DRAINED!", b: "A vampire is sucking the life out of your laptop.", d: "Threat: it likes to byte" },
+    { t: " GHOST DETECTED", h: "THERE IS A GHOST IN YOUR BROWSER!", b: "It keeps saying 'boo' every time you open a new tab.", d: "Threat: SpookyMemory.dll" },
+    { t: "⚠ CRITICAL ALERT", h: "DO NOT CLOSE THIS WINDOW", b: "Closing this window will not help. It never helps.", d: "Threat: Win32.ClickMe" },
+    { t: " BLACK CAT ALERT", h: "13 BAD LUCK ERRORS FOUND!", b: "A black cat walked across your keyboard.", d: "Threat: Meowware.Cursed" },
+    { t: "⚠ SECURITY BREACH", h: "HACKERS ARE INSIDE", b: "A hacker in a hoodie is downloading your RAM.", d: "IP traced: 127.0.0.1 (very close)" },
+    { t: "⚠ TROJAN WARNING", h: "47 VIRUSES FOUND", b: "Your computer has more viruses than a hospital.", d: "Threat: Adware.PopUpGenerator" },
+    { t: "⚠ URGENT", h: "YOUR HARD DRIVE IS SAD", b: "Morale in sector 7G has collapsed completely.", d: "Threat: EmotionalDamage.exe" },
+    { t: "⚠ FINAL WARNING", h: "THIS IS THE FINAL WARNING", b: "There will be more final warnings. Many more.", d: "Threat: Spam.Popup.Recursive" },
+    { t: "⚠ SYSTEM WARNING", h: "ERROR: TOO MANY WARNINGS", b: "The warning system itself is now infected.", d: "Threat: Meta.Virus.Joke" }
+  ];
+
+  let popups = 0;
+  const MAX = 160;
+  let dragTarget = null, dragOffX = 0, dragOffY = 0;
+  let scanLevel = 0;
+  let scanTimer = null;
+  let jokeEnded = false;
+
+  const countEl = document.getElementById('count');
+  const levelEl = document.getElementById('level');
+  const scanEl = document.getElementById('scan');
+
+  function updateHud() {
+    countEl.textContent = popups;
+    levelEl.textContent = Math.min(99, popups) + "%";
+  }
+
+  function spawnPopup() {
+    if (jokeEnded || popups >= MAX) return;
+
+    const w = warnings[Math.floor(Math.random() * warnings.length)];
+    const el = document.createElement('div');
+    el.className = 'popup';
+
+    const maxX = Math.max(0, window.innerWidth - 360);
+    const maxY = Math.max(0, window.innerHeight - 250);
+
+    el.style.left = Math.floor(Math.random() * maxX) + 'px';
+    el.style.top = Math.floor(Math.random() * maxY) + 'px';
+    el.style.zIndex = 10 + Math.floor(Math.random() * 500);
+
+    el.innerHTML =
+      '<div class="titlebar"><span>' + w.t + '</span><span class="x">✕</span></div>' +
+      '<div class="body"><div class="icon">🎃</div><div class="text"><b>' + w.h + '</b><br>' + w.b +
+      '<div class="small">' + w.d + '</div></div></div>' +
+      '<div class="footer"><button class="stop-btn">CLICK TO BANISH THE GHOSTS!</button></div>';
+
+    // The red button removes one popup but spawns THREE new ones.
+    el.querySelector('.stop-btn').addEventListener('click', () => {
+      el.remove();
+      popups--;
+      spawnPopup();
+      spawnPopup();
+      spawnPopup();
+      spawnPopup();
+      updateHud();
+    });
+
+    // Closing the window summons FOUR more spooky warnings.
+    el.querySelector('.x').addEventListener('click', () => {
+      el.remove();
+      popups--;
+      spawnPopup();
+      spawnPopup();
+      spawnPopup();
+      spawnPopup();
+      spawnPopup();
+      updateHud();
+    });
+
+    // Dragging by the titlebar
+    const bar = el.querySelector('.titlebar');
+    bar.addEventListener('mousedown', (e) => {
+      if (e.target.classList.contains('x')) return;
+      dragTarget = el;
+      dragOffX = e.clientX - el.offsetLeft;
+      dragOffY = e.clientY - el.offsetTop;
+      el.style.zIndex = 999;
+    });
+
+    document.body.appendChild(el);
+    popups++;
+    updateHud();
+  }
+
+  document.addEventListener('mousemove', (e) => {
+    if (!dragTarget) return;
+    dragTarget.style.left = (e.clientX - dragOffX) + 'px';
+    dragTarget.style.top = (e.clientY - dragOffY) + 'px';
+  });
+
+  document.addEventListener('mouseup', () => dragTarget = null);
+
+  // Creative addition: fake haunted scan slowly increases.
+  function startHauntedScan() {
+    scanTimer = setInterval(() => {
+      if (jokeEnded) return;
+      scanLevel = Math.min(100, scanLevel + Math.floor(Math.random() * 8) + 1);
+      scanEl.textContent = scanLevel + "%";
+
+      if (scanLevel >= 100) {
+        scanEl.textContent = "100% 👻";
+        clearInterval(scanTimer);
+      }
+    }, 1200);
+  }
+
+  // The escape button ends the prank and clears every popup.
+  document.getElementById('mercy').addEventListener('click', () => {
+    jokeEnded = true;
+    clearInterval(scanTimer);
+    document.querySelectorAll('.popup').forEach(p => p.remove());
+    popups = 0;
+    updateHud();
+
+    document.querySelector('#desktop-msg h1').textContent =
+      "The ghosts have left the building!";
+    document.querySelector('#desktop-msg p').textContent =
+      "Happy Halloween! Your computer was never infected.";
+    document.getElementById('mercy').textContent = "Ghosts Banished!";
+    scanEl.textContent = "Stopped";
+  });
+
+  spawnPopup();
+  updateHud();
+  startHauntedScan();
+</script>
+</body>
+</html>
